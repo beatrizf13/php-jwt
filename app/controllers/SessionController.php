@@ -2,7 +2,9 @@
 
 namespace Controllers;
 
-require_once dirname(__DIR__, 1) . "/config/generateJwtToken.php";
+use DAO;
+
+require_once getenv("PATH_APP") . "/utils/generateJwtToken.php";
 
 class SessionController
 {
@@ -10,15 +12,45 @@ class SessionController
     {
         $body = $req->getParsedBody();
 
-        if(!($body["username"] == "beatriz") || !($body["password"] == "123456")) {
-            return $res->withStatus(400)->withJson([ "message" => "invalid credentials"]);
+        if (!isset($body["username"]) || !isset($body["password"])) {
+            return $res->withStatus(401)->withJson(["message" => "username and password are required"]);
         }
 
-        return $res->withJson([
-            "token" =>  generateToken(),
-            "refresh_token" =>  generateRefreshToken()
-        ]);
-  
-        return $res;
+        $user = (new DAO\UserDAO)->show($body["username"]);
+
+        if (!isset($user)) {
+            return $res->withStatus(401)->withJson(["message" => "user does not exist"]);
+        }
+
+        $user = (new DAO\AuthDAO)->login($body["username"]);
+
+        if (!isset($user)) {
+            return $res->withStatus(500)->withJson(["message" => "something went wrong"]);
+        }
+
+        if (password_verify($body["password"], $user["password"])) {
+            $session = (new DAO\SessionDAO)->show($user["id"]);
+
+            if (!isset($session)) {
+                $session = generateToken($user["id"]);
+            }
+
+            if (!isset($session)) {
+                return $res->withStatus(500)->withJson(["message" => "something went wrong"]);
+            }
+
+            return $res->withJson([
+                "user" => [
+                    "id" => $user["id"],
+                    "username" => $user["username"]
+                ],
+                "token" => $session["token"],
+                "refreshToken" =>  $session["refreshToken"],
+                "createdAt" =>  $session["createdAt"],
+                "expiresAt" =>  $session["expiresAt"],
+            ]);
+        } else {
+            return $res->withStatus(401)->withJson(["message" => "invalid credentials"]);
+        }
     }
 }
