@@ -40,10 +40,6 @@ class SessionController
             }
 
             return $res->withJson([
-                "user" => [
-                    "id" => $user["id"],
-                    "username" => $user["username"]
-                ],
                 "token" => $session["token"],
                 "refreshToken" =>  $session["refreshToken"],
                 "createdAt" =>  $session["createdAt"],
@@ -52,5 +48,37 @@ class SessionController
         } else {
             return $res->withStatus(401)->withJson(["message" => "invalid credentials"]);
         }
+    }
+
+    public static function refreshToken($req, $res, $args)
+    {
+        $body = $req->getParsedBody();
+
+        if (!isset($body["refreshToken"])) {
+            return $res->withStatus(401)->withJson(["message" => "refreshToken is required"]);
+        }
+
+        $session = (new DAO\SessionDAO)->refreshToken($body["refreshToken"]);
+
+        if (!isset($session)) {
+            return $res->withStatus(401)->withJson(["message" => "invalid refresh token"]);
+        }
+
+        $session = (new DAO\SessionDAO)->show($session["userId"]);
+
+        if (!isset($session)) {
+            $session = generateToken($session["userId"]);
+        }
+
+        if (!isset($session)) {
+            return $res->withStatus(500)->withJson(["message" => "something went wrong"]);
+        }
+
+        return $res->withJson([
+            "token" => $session["token"],
+            "refreshToken" =>  $session["refreshToken"],
+            "createdAt" =>  $session["createdAt"],
+            "expiresAt" =>  $session["expiresAt"],
+        ]);
     }
 }
