@@ -58,7 +58,7 @@ class SessionController
             return $res->withStatus(401)->withJson(["message" => "refreshToken is required"]);
         }
 
-        $session = (new DAO\SessionDAO)->refreshToken($body["refreshToken"]);
+        $session = (new DAO\AuthDAO)->refreshToken($body["refreshToken"]);
 
         if (!isset($session)) {
             return $res->withStatus(401)->withJson(["message" => "invalid refresh token"]);

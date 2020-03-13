@@ -7,7 +7,7 @@ class SessionDAO extends DAO
     public function show($userId)
     {
         try {
-            $sql = "SELECT token, refreshToken, createdAt, expiresAt FROM token WHERE userId = :userId AND expiresAt > NOW()";
+            $sql = "SELECT token, refreshToken, createdAt, expiresAt FROM token WHERE userId = :userId AND expiresAt >= NOW()";
             $req = $this->PDO->prepare($sql);
             $req->bindValue(":userId", $userId);
 
@@ -70,25 +70,5 @@ class SessionDAO extends DAO
         }
 
         return null;
-    }
-
-    public function refreshToken($refreshToken)
-    {
-        try {
-            $sql = "SELECT userId FROM token WHERE refreshToken = :refreshToken";
-            $req = $this->PDO->prepare($sql);
-            $req->bindValue(":refreshToken", $refreshToken);
-
-
-            if ($req->execute()) {
-                $result = $req->fetch();
-
-                if (!empty($result)) {
-                    return $result;
-                }
-            }
-        } catch (\Exception $error) {
-            echo $error->getMessage();
-        }
     }
 }
