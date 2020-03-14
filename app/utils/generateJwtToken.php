@@ -6,7 +6,7 @@ use DAO\SessionDAO;
 function generateToken($userId)
 {
     $createdAt = time();
-    $expiresAt = strtotime("+12 hours");
+    $expiresAt = strtotime("+20 seconds");
 
     $tokenPayload = [
         "iat" => $createdAt,

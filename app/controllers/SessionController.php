@@ -64,11 +64,7 @@ class SessionController
             return $res->withStatus(401)->withJson(["message" => "invalid refresh token"]);
         }
 
-        $session = (new DAO\SessionDAO)->show($session["userId"]);
-
-        if (!isset($session)) {
-            $session = generateToken($session["userId"]);
-        }
+        $session = generateToken($session["userId"]);
 
         if (!isset($session)) {
             return $res->withStatus(500)->withJson(["message" => "something went wrong"]);
